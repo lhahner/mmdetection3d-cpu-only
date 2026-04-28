@@ -14,11 +14,21 @@ from .box_np_ops import (box2d_to_corner_jit, box3d_to_bbox,
                          remove_outside_points, rotation_points_single_angle,
                          surface_equ_3d)
 # yapf:enable
-from .iou3d_calculator import (AxisAlignedBboxOverlaps3D, BboxOverlaps3D,
-                               BboxOverlapsNearest3D,
-                               axis_aligned_bbox_overlaps_3d, bbox_overlaps_3d,
-                               bbox_overlaps_nearest_3d)
 from .transforms import bbox3d2result, bbox3d2roi, bbox3d_mapping_back
+
+try:
+    from .iou3d_calculator import (AxisAlignedBboxOverlaps3D, BboxOverlaps3D,
+                                   BboxOverlapsNearest3D,
+                                   axis_aligned_bbox_overlaps_3d,
+                                   bbox_overlaps_3d,
+                                   bbox_overlaps_nearest_3d)
+    _IOU_EXPORTS = [
+        'BboxOverlapsNearest3D', 'BboxOverlaps3D',
+        'bbox_overlaps_nearest_3d', 'bbox_overlaps_3d',
+        'AxisAlignedBboxOverlaps3D', 'axis_aligned_bbox_overlaps_3d'
+    ]
+except Exception:
+    _IOU_EXPORTS = []
 
 __all__ = [
     'box2d_to_corner_jit', 'box3d_to_bbox', 'box_camera_to_lidar',
@@ -31,8 +41,5 @@ __all__ = [
     'points_in_convex_polygon_jit', 'points_in_rbbox',
     'projection_matrix_to_CRT_kitti', 'rbbox2d_to_near_bbox',
     'remove_outside_points', 'rotation_points_single_angle', 'surface_equ_3d',
-    'BboxOverlapsNearest3D', 'BboxOverlaps3D', 'bbox_overlaps_nearest_3d',
-    'bbox_overlaps_3d', 'AxisAlignedBboxOverlaps3D',
-    'axis_aligned_bbox_overlaps_3d', 'bbox3d_mapping_back', 'bbox3d2roi',
-    'bbox3d2result'
-]
+    'bbox3d_mapping_back', 'bbox3d2roi', 'bbox3d2result'
+] + _IOU_EXPORTS

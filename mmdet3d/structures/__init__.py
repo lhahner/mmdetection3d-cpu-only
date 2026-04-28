@@ -5,11 +5,7 @@ from .bbox_3d import (BaseInstance3DBoxes, Box3DMode, CameraInstance3DBoxes,
                       mono_cam_box2vis, points_cam2img, points_img2cam,
                       rotation_3d_in_axis, xywhr2xyxyr)
 from .det3d_data_sample import Det3DDataSample
-# yapf: disable
-from .ops import (AxisAlignedBboxOverlaps3D, BboxOverlaps3D,
-                  BboxOverlapsNearest3D, axis_aligned_bbox_overlaps_3d,
-                  bbox3d2result, bbox3d2roi, bbox3d_mapping_back,
-                  bbox_overlaps_3d, bbox_overlaps_nearest_3d,
+from .ops import (bbox3d2result, bbox3d2roi, bbox3d_mapping_back,
                   box2d_to_corner_jit, box3d_to_bbox, box_camera_to_lidar,
                   boxes3d_to_corners3d_lidar, camera_to_lidar,
                   center_to_corner_box2d, center_to_corner_box3d,
@@ -22,9 +18,20 @@ from .ops import (AxisAlignedBboxOverlaps3D, BboxOverlaps3D,
                   projection_matrix_to_CRT_kitti, rbbox2d_to_near_bbox,
                   remove_outside_points, rotation_points_single_angle,
                   surface_equ_3d)
-# yapf: enable
 from .point_data import PointData
 from .points import BasePoints, CameraPoints, DepthPoints, LiDARPoints
+
+try:
+    from .ops import (AxisAlignedBboxOverlaps3D, BboxOverlaps3D,
+                      BboxOverlapsNearest3D, axis_aligned_bbox_overlaps_3d,
+                      bbox_overlaps_3d, bbox_overlaps_nearest_3d)
+    _IOU_EXPORTS = [
+        'BboxOverlapsNearest3D', 'BboxOverlaps3D',
+        'bbox_overlaps_nearest_3d', 'bbox_overlaps_3d',
+        'AxisAlignedBboxOverlaps3D', 'axis_aligned_bbox_overlaps_3d'
+    ]
+except Exception:
+    _IOU_EXPORTS = []
 
 __all__ = [
     'BasePoints', 'CameraPoints', 'DepthPoints', 'LiDARPoints',
@@ -42,8 +49,5 @@ __all__ = [
     'points_in_convex_polygon_jit', 'points_in_rbbox',
     'projection_matrix_to_CRT_kitti', 'rbbox2d_to_near_bbox',
     'remove_outside_points', 'rotation_points_single_angle', 'surface_equ_3d',
-    'BboxOverlapsNearest3D', 'BboxOverlaps3D', 'bbox_overlaps_nearest_3d',
-    'bbox_overlaps_3d', 'AxisAlignedBboxOverlaps3D',
-    'axis_aligned_bbox_overlaps_3d', 'bbox3d_mapping_back', 'bbox3d2roi',
-    'bbox3d2result'
-]
+    'bbox3d_mapping_back', 'bbox3d2roi', 'bbox3d2result'
+] + _IOU_EXPORTS

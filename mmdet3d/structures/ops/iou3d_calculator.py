@@ -1,9 +1,36 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
-from mmdet.structures.bbox import bbox_overlaps
 
 from mmdet3d.registry import TASK_UTILS
 from mmdet3d.structures.bbox_3d import get_box_type
+
+
+def bbox_overlaps(bboxes1, bboxes2, mode='iou', is_aligned=False, eps=1e-6):
+    """Lightweight 2D bbox overlaps to avoid importing mmdet at import time."""
+    assert mode in ['iou', 'iof']
+    assert bboxes1.size(-1) == 4 and bboxes2.size(-1) == 4
+
+    area1 = (bboxes1[:, 2] - bboxes1[:, 0]).clamp(min=0) * (
+        bboxes1[:, 3] - bboxes1[:, 1]).clamp(min=0)
+    area2 = (bboxes2[:, 2] - bboxes2[:, 0]).clamp(min=0) * (
+        bboxes2[:, 3] - bboxes2[:, 1]).clamp(min=0)
+
+    if is_aligned:
+        assert bboxes1.shape[0] == bboxes2.shape[0]
+        lt = torch.max(bboxes1[:, :2], bboxes2[:, :2])
+        rb = torch.min(bboxes1[:, 2:], bboxes2[:, 2:])
+        wh = (rb - lt).clamp(min=0)
+        overlap = wh[:, 0] * wh[:, 1]
+        union = area1 if mode == 'iof' else area1 + area2 - overlap
+        return overlap / union.clamp(min=eps)
+
+    lt = torch.max(bboxes1[:, None, :2], bboxes2[None, :, :2])
+    rb = torch.min(bboxes1[:, None, 2:], bboxes2[None, :, 2:])
+    wh = (rb - lt).clamp(min=0)
+    overlap = wh[..., 0] * wh[..., 1]
+    union = area1[:, None] if mode == 'iof' else area1[:, None] + area2[
+        None, :] - overlap
+    return overlap / union.clamp(min=eps)
 
 
 @TASK_UTILS.register_module()
