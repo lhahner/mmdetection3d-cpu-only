@@ -1,11 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from .base import Base3DSegmentor
-from .cylinder3d import Cylinder3D
-from .encoder_decoder import EncoderDecoder3D
-from .minkunet import MinkUNet
-from .seg3d_tta import Seg3DTTAModel
+from .._import_utils import optional_import
 
-__all__ = [
-    'Base3DSegmentor', 'EncoderDecoder3D', 'Cylinder3D', 'MinkUNet',
-    'Seg3DTTAModel'
-]
+__all__ = []
+
+optional_import('.base', ['Base3DSegmentor'], globals(), __all__)
+optional_import('.cylinder3d', ['Cylinder3D'], globals(), __all__)
+optional_import('.encoder_decoder', ['EncoderDecoder3D'], globals(), __all__)
+optional_import('.minkunet', ['MinkUNet'], globals(), __all__)
+optional_import('.seg3d_tta', ['Seg3DTTAModel'], globals(), __all__)

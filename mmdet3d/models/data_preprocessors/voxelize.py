@@ -8,10 +8,28 @@ from torch.autograd import Function
 from torch.nn import functional as F
 from torch.nn.modules.utils import _pair
 
-ext_module = ext_loader.load_ext('_ext', [
-    'dynamic_voxelize_forward', 'hard_voxelize_forward',
-    'dynamic_point_to_voxel_forward', 'dynamic_point_to_voxel_backward'
-])
+ext_module = None
+ext_module_error = None
+
+
+def _get_ext_module():
+    global ext_module, ext_module_error
+    if ext_module is not None:
+        return ext_module
+    if ext_module_error is not None:
+        raise ImportError('Compiled MMCV voxelization ops are unavailable.'
+                          ) from ext_module_error
+    try:
+        ext_module = ext_loader.load_ext('_ext', [
+            'dynamic_voxelize_forward', 'hard_voxelize_forward',
+            'dynamic_point_to_voxel_forward',
+            'dynamic_point_to_voxel_backward'
+        ])
+        return ext_module
+    except Exception as exc:
+        ext_module_error = exc
+        raise ImportError(
+            'Compiled MMCV voxelization ops are unavailable.') from exc
 
 
 class _Voxelization(Function):
@@ -59,6 +77,7 @@ class _Voxelization(Function):
             shape of [M, 3]. The last is number of point per voxel with the
             shape of [M], which only returned when max_points != -1.
         """
+        ext_module = _get_ext_module()
         if max_points == -1 or max_voxels == -1:
             coors = points.new_zeros(size=(points.size(0), 3), dtype=torch.int)
             ext_module.dynamic_voxelize_forward(
@@ -210,6 +229,7 @@ class _DynamicScatter(Function):
             reduced from input features that share the same voxel coordinates.
             The second is voxel coordinates with shape [M, ndim].
         """
+        ext_module = _get_ext_module()
         results = ext_module.dynamic_point_to_voxel_forward(
             feats, coors, reduce_type)
         (voxel_feats, voxel_coors, point2voxel_map,
@@ -230,6 +250,7 @@ class _DynamicScatter(Function):
         (feats, voxel_feats, point2voxel_map,
          voxel_points_count) = ctx.saved_tensors
         grad_feats = torch.zeros_like(feats)
+        ext_module = _get_ext_module()
         # TODO: whether to use index put or use cuda_backward
         # To use index put, need point to voxel index
         ext_module.dynamic_point_to_voxel_backward(

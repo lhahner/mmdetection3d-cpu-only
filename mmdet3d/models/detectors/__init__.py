@@ -1,32 +1,30 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from .base import Base3DDetector
-from .centerpoint import CenterPoint
-from .dfm import DfM
-from .dynamic_voxelnet import DynamicVoxelNet
-from .fcos_mono3d import FCOSMono3D
-from .groupfree3dnet import GroupFree3DNet
-from .h3dnet import H3DNet
-from .imvotenet import ImVoteNet
-from .imvoxelnet import ImVoxelNet
-from .mink_single_stage import MinkSingleStage3DDetector
-from .multiview_dfm import MultiViewDfM
-from .mvx_faster_rcnn import DynamicMVXFasterRCNN, MVXFasterRCNN
-from .mvx_two_stage import MVXTwoStageDetector
-from .parta2 import PartA2
-from .point_rcnn import PointRCNN
-from .pv_rcnn import PointVoxelRCNN
-from .sassd import SASSD
-from .single_stage_mono3d import SingleStageMono3DDetector
-from .smoke_mono3d import SMOKEMono3D
-from .ssd3dnet import SSD3DNet
-from .votenet import VoteNet
-from .voxelnet import VoxelNet
+from .._import_utils import optional_import
 
-__all__ = [
-    'Base3DDetector', 'VoxelNet', 'DynamicVoxelNet', 'MVXTwoStageDetector',
-    'DynamicMVXFasterRCNN', 'MVXFasterRCNN', 'PartA2', 'VoteNet', 'H3DNet',
-    'CenterPoint', 'SSD3DNet', 'ImVoteNet', 'SingleStageMono3DDetector',
-    'FCOSMono3D', 'ImVoxelNet', 'GroupFree3DNet', 'PointRCNN', 'SMOKEMono3D',
-    'SASSD', 'MinkSingleStage3DDetector', 'MultiViewDfM', 'DfM',
-    'PointVoxelRCNN'
-]
+__all__ = []
+
+optional_import('.base', ['Base3DDetector'], globals(), __all__)
+optional_import('.centerpoint', ['CenterPoint'], globals(), __all__)
+optional_import('.dfm', ['DfM'], globals(), __all__)
+optional_import('.dynamic_voxelnet', ['DynamicVoxelNet'], globals(), __all__)
+optional_import('.fcos_mono3d', ['FCOSMono3D'], globals(), __all__)
+optional_import('.groupfree3dnet', ['GroupFree3DNet'], globals(), __all__)
+optional_import('.h3dnet', ['H3DNet'], globals(), __all__)
+optional_import('.imvotenet', ['ImVoteNet'], globals(), __all__)
+optional_import('.imvoxelnet', ['ImVoxelNet'], globals(), __all__)
+optional_import('.mink_single_stage', ['MinkSingleStage3DDetector'], globals(),
+                __all__)
+optional_import('.multiview_dfm', ['MultiViewDfM'], globals(), __all__)
+optional_import('.mvx_faster_rcnn',
+                ['DynamicMVXFasterRCNN', 'MVXFasterRCNN'], globals(), __all__)
+optional_import('.mvx_two_stage', ['MVXTwoStageDetector'], globals(), __all__)
+optional_import('.parta2', ['PartA2'], globals(), __all__)
+optional_import('.point_rcnn', ['PointRCNN'], globals(), __all__)
+optional_import('.pv_rcnn', ['PointVoxelRCNN'], globals(), __all__)
+optional_import('.sassd', ['SASSD'], globals(), __all__)
+optional_import('.single_stage_mono3d', ['SingleStageMono3DDetector'],
+                globals(), __all__)
+optional_import('.smoke_mono3d', ['SMOKEMono3D'], globals(), __all__)
+optional_import('.ssd3dnet', ['SSD3DNet'], globals(), __all__)
+optional_import('.votenet', ['VoteNet'], globals(), __all__)
+optional_import('.voxelnet', ['VoxelNet'], globals(), __all__)

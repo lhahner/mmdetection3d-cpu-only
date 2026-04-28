@@ -1,9 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from .pillar_encoder import DynamicPillarFeatureNet, PillarFeatureNet
-from .voxel_encoder import (DynamicSimpleVFE, DynamicVFE, HardSimpleVFE,
-                            HardVFE, SegVFE)
+from .._import_utils import optional_import
 
-__all__ = [
-    'PillarFeatureNet', 'DynamicPillarFeatureNet', 'HardVFE', 'DynamicVFE',
-    'HardSimpleVFE', 'DynamicSimpleVFE', 'SegVFE'
-]
+__all__ = []
+
+optional_import('.pillar_encoder', ['DynamicPillarFeatureNet',
+                                    'PillarFeatureNet'], globals(), __all__)
+optional_import('.voxel_encoder',
+                ['DynamicSimpleVFE', 'DynamicVFE', 'HardSimpleVFE', 'HardVFE',
+                 'SegVFE'], globals(), __all__)

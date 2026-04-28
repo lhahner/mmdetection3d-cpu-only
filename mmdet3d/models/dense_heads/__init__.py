@@ -1,28 +1,27 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from .anchor3d_head import Anchor3DHead
-from .anchor_free_mono3d_head import AnchorFreeMono3DHead
-from .base_3d_dense_head import Base3DDenseHead
-from .base_conv_bbox_head import BaseConvBboxHead
-from .base_mono3d_dense_head import BaseMono3DDenseHead
-from .centerpoint_head import CenterHead
-from .fcaf3d_head import FCAF3DHead
-from .fcos_mono3d_head import FCOSMono3DHead
-from .free_anchor3d_head import FreeAnchor3DHead
-from .groupfree3d_head import GroupFree3DHead
-from .imvoxel_head import ImVoxelHead
-from .monoflex_head import MonoFlexHead
-from .parta2_rpn_head import PartA2RPNHead
-from .pgd_head import PGDHead
-from .point_rpn_head import PointRPNHead
-from .shape_aware_head import ShapeAwareHead
-from .smoke_mono3d_head import SMOKEMono3DHead
-from .ssd_3d_head import SSD3DHead
-from .vote_head import VoteHead
+from .._import_utils import optional_import
 
-__all__ = [
-    'Anchor3DHead', 'FreeAnchor3DHead', 'PartA2RPNHead', 'VoteHead',
-    'SSD3DHead', 'BaseConvBboxHead', 'CenterHead', 'ShapeAwareHead',
-    'BaseMono3DDenseHead', 'AnchorFreeMono3DHead', 'FCOSMono3DHead',
-    'GroupFree3DHead', 'PointRPNHead', 'SMOKEMono3DHead', 'PGDHead',
-    'MonoFlexHead', 'Base3DDenseHead', 'FCAF3DHead', 'ImVoxelHead'
-]
+__all__ = []
+
+optional_import('.anchor3d_head', ['Anchor3DHead'], globals(), __all__)
+optional_import('.anchor_free_mono3d_head', ['AnchorFreeMono3DHead'],
+                globals(), __all__)
+optional_import('.base_3d_dense_head', ['Base3DDenseHead'], globals(), __all__)
+optional_import('.base_conv_bbox_head', ['BaseConvBboxHead'], globals(), __all__)
+optional_import('.base_mono3d_dense_head', ['BaseMono3DDenseHead'], globals(),
+                __all__)
+optional_import('.centerpoint_head', ['CenterHead'], globals(), __all__)
+optional_import('.fcaf3d_head', ['FCAF3DHead'], globals(), __all__)
+optional_import('.fcos_mono3d_head', ['FCOSMono3DHead'], globals(), __all__)
+optional_import('.free_anchor3d_head', ['FreeAnchor3DHead'], globals(),
+                __all__)
+optional_import('.groupfree3d_head', ['GroupFree3DHead'], globals(), __all__)
+optional_import('.imvoxel_head', ['ImVoxelHead'], globals(), __all__)
+optional_import('.monoflex_head', ['MonoFlexHead'], globals(), __all__)
+optional_import('.parta2_rpn_head', ['PartA2RPNHead'], globals(), __all__)
+optional_import('.pgd_head', ['PGDHead'], globals(), __all__)
+optional_import('.point_rpn_head', ['PointRPNHead'], globals(), __all__)
+optional_import('.shape_aware_head', ['ShapeAwareHead'], globals(), __all__)
+optional_import('.smoke_mono3d_head', ['SMOKEMono3DHead'], globals(), __all__)
+optional_import('.ssd_3d_head', ['SSD3DHead'], globals(), __all__)
+optional_import('.vote_head', ['VoteHead'], globals(), __all__)

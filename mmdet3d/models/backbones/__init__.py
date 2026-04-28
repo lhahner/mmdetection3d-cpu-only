@@ -1,21 +1,19 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from mmdet.models.backbones import SSDVGG, HRNet, ResNet, ResNetV1d, ResNeXt
 
-from .cylinder3d import Asymm3DSpconv
-from .dgcnn import DGCNNBackbone
-from .dla import DLANet
-from .mink_resnet import MinkResNet
-from .minkunet_backbone import MinkUNetBackbone
-from .multi_backbone import MultiBackbone
-from .nostem_regnet import NoStemRegNet
-from .pointnet2_sa_msg import PointNet2SAMSG
-from .pointnet2_sa_ssg import PointNet2SASSG
-from .second import SECOND
-from .spvcnn_backone import MinkUNetBackboneV2, SPVCNNBackbone
+from .._import_utils import optional_import
 
-__all__ = [
-    'ResNet', 'ResNetV1d', 'ResNeXt', 'SSDVGG', 'HRNet', 'NoStemRegNet',
-    'SECOND', 'DGCNNBackbone', 'PointNet2SASSG', 'PointNet2SAMSG',
-    'MultiBackbone', 'DLANet', 'MinkResNet', 'Asymm3DSpconv',
-    'MinkUNetBackbone', 'SPVCNNBackbone', 'MinkUNetBackboneV2'
-]
+__all__ = ['ResNet', 'ResNetV1d', 'ResNeXt', 'SSDVGG', 'HRNet']
+
+optional_import('.cylinder3d', ['Asymm3DSpconv'], globals(), __all__)
+optional_import('.dgcnn', ['DGCNNBackbone'], globals(), __all__)
+optional_import('.dla', ['DLANet'], globals(), __all__)
+optional_import('.mink_resnet', ['MinkResNet'], globals(), __all__)
+optional_import('.minkunet_backbone', ['MinkUNetBackbone'], globals(), __all__)
+optional_import('.multi_backbone', ['MultiBackbone'], globals(), __all__)
+optional_import('.nostem_regnet', ['NoStemRegNet'], globals(), __all__)
+optional_import('.pointnet2_sa_msg', ['PointNet2SAMSG'], globals(), __all__)
+optional_import('.pointnet2_sa_ssg', ['PointNet2SASSG'], globals(), __all__)
+optional_import('.second', ['SECOND'], globals(), __all__)
+optional_import('.spvcnn_backone',
+                ['MinkUNetBackboneV2', 'SPVCNNBackbone'], globals(), __all__)

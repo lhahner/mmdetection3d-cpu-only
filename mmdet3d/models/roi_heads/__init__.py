@@ -1,15 +1,18 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from .base_3droi_head import Base3DRoIHead
-from .bbox_heads import PartA2BboxHead
-from .h3d_roi_head import H3DRoIHead
-from .mask_heads import PointwiseSemanticHead, PrimitiveHead
-from .part_aggregation_roi_head import PartAggregationROIHead
-from .point_rcnn_roi_head import PointRCNNRoIHead
-from .pv_rcnn_roi_head import PVRCNNRoiHead
-from .roi_extractors import Single3DRoIAwareExtractor, SingleRoIExtractor
+from .._import_utils import optional_import
 
-__all__ = [
-    'Base3DRoIHead', 'PartAggregationROIHead', 'PointwiseSemanticHead',
-    'Single3DRoIAwareExtractor', 'PartA2BboxHead', 'SingleRoIExtractor',
-    'H3DRoIHead', 'PrimitiveHead', 'PointRCNNRoIHead', 'PVRCNNRoiHead'
-]
+__all__ = []
+
+optional_import('.base_3droi_head', ['Base3DRoIHead'], globals(), __all__)
+optional_import('.bbox_heads', ['PartA2BboxHead'], globals(), __all__)
+optional_import('.h3d_roi_head', ['H3DRoIHead'], globals(), __all__)
+optional_import('.mask_heads', ['PointwiseSemanticHead', 'PrimitiveHead'],
+                globals(), __all__)
+optional_import('.part_aggregation_roi_head', ['PartAggregationROIHead'],
+                globals(), __all__)
+optional_import('.point_rcnn_roi_head', ['PointRCNNRoIHead'], globals(),
+                __all__)
+optional_import('.pv_rcnn_roi_head', ['PVRCNNRoiHead'], globals(), __all__)
+optional_import('.roi_extractors',
+                ['Single3DRoIAwareExtractor', 'SingleRoIExtractor'],
+                globals(), __all__)

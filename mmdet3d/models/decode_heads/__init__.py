@@ -1,12 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from .cylinder3d_head import Cylinder3DHead
-from .decode_head import Base3DDecodeHead
-from .dgcnn_head import DGCNNHead
-from .minkunet_head import MinkUNetHead
-from .paconv_head import PAConvHead
-from .pointnet2_head import PointNet2Head
+from .._import_utils import optional_import
 
-__all__ = [
-    'PointNet2Head', 'DGCNNHead', 'PAConvHead', 'Cylinder3DHead',
-    'Base3DDecodeHead', 'MinkUNetHead'
-]
+__all__ = []
+
+optional_import('.cylinder3d_head', ['Cylinder3DHead'], globals(), __all__)
+optional_import('.decode_head', ['Base3DDecodeHead'], globals(), __all__)
+optional_import('.dgcnn_head', ['DGCNNHead'], globals(), __all__)
+optional_import('.minkunet_head', ['MinkUNetHead'], globals(), __all__)
+optional_import('.paconv_head', ['PAConvHead'], globals(), __all__)
+optional_import('.pointnet2_head', ['PointNet2Head'], globals(), __all__)
