@@ -5,8 +5,6 @@ from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
-from mmdet.models import DetDataPreprocessor
-from mmdet.models.utils.misc import samplelist_boxtype2tensor
 from mmengine.model import stack_batch
 from mmengine.utils import is_seq_of
 from torch import Tensor
@@ -17,6 +15,22 @@ from mmdet3d.structures.det3d_data_sample import SampleList
 from mmdet3d.utils import OptConfigType
 from .utils import multiview_img_stack_batch
 from .voxelize import VoxelizationByGridShape, dynamic_scatter_3d
+
+try:
+    from mmdet.models.data_preprocessors.data_preprocessor import \
+        DetDataPreprocessor
+except Exception:
+    try:
+        from mmdet.models.data_preprocessors import DetDataPreprocessor
+    except Exception:
+        from mmdet.models import DetDataPreprocessor
+
+try:
+    from mmdet.models.utils.misc import samplelist_boxtype2tensor
+except Exception:
+
+    def samplelist_boxtype2tensor(data_samples):
+        return data_samples
 
 
 @MODELS.register_module()
