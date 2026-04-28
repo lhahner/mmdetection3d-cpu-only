@@ -1,15 +1,132 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import warnings
 from abc import abstractmethod
-from typing import Iterator, Optional, Sequence, Tuple, Union
+from typing import Iterator, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
-from mmcv.ops import box_iou_rotated, points_in_boxes_all, points_in_boxes_part
 from torch import Tensor
 
 from mmdet3d.structures.points import BasePoints
 from .utils import limit_period
+
+try:
+    from mmcv.ops import box_iou_rotated, points_in_boxes_all, points_in_boxes_part
+    MMCV_OPS_AVAILABLE = True
+except (ImportError, ModuleNotFoundError):
+    box_iou_rotated = None
+    points_in_boxes_all = None
+    points_in_boxes_part = None
+    MMCV_OPS_AVAILABLE = False
+
+
+def _rotated_box_to_corners(box: Tensor) -> Tensor:
+    """Convert a single XYWHR box to 4 BEV corners."""
+    cx, cy, width, height, yaw = box
+    half_w = width / 2
+    half_h = height / 2
+    corners = box.new_tensor([[-half_w, -half_h], [-half_w, half_h],
+                              [half_w, half_h], [half_w, -half_h]])
+    sin_yaw = torch.sin(yaw)
+    cos_yaw = torch.cos(yaw)
+    rot = box.new_tensor([[cos_yaw, sin_yaw], [-sin_yaw, cos_yaw]])
+    return corners @ rot + box.new_tensor([cx, cy])
+
+
+def _polygon_area(points: List[Tensor]) -> Tensor:
+    """Compute polygon area with the shoelace formula."""
+    if len(points) < 3:
+        return torch.tensor(0.0, dtype=points[0].dtype,
+                            device=points[0].device) if points else torch.tensor(0.0)
+    area = points[0].new_tensor(0.0)
+    for idx, point in enumerate(points):
+        next_point = points[(idx + 1) % len(points)]
+        area = area + point[0] * next_point[1] - next_point[0] * point[1]
+    return area.abs() * 0.5
+
+
+def _cross_2d(vec1: Tensor, vec2: Tensor) -> Tensor:
+    return vec1[0] * vec2[1] - vec1[1] * vec2[0]
+
+
+def _is_inside(point: Tensor, edge_start: Tensor, edge_end: Tensor) -> bool:
+    return _cross_2d(edge_end - edge_start, point - edge_start) >= 0
+
+
+def _line_intersection(p1: Tensor, p2: Tensor, q1: Tensor, q2: Tensor) -> Tensor:
+    r = p2 - p1
+    s = q2 - q1
+    denom = _cross_2d(r, s)
+    if torch.abs(denom) < 1e-8:
+        return (p2 + q1) / 2
+    t = _cross_2d(q1 - p1, s) / denom
+    return p1 + t * r
+
+
+def _intersect_polygons(subject: Tensor, clip: Tensor) -> List[Tensor]:
+    """Clip one convex polygon with another."""
+    output = [point for point in subject]
+    for idx in range(len(clip)):
+        edge_start = clip[idx]
+        edge_end = clip[(idx + 1) % len(clip)]
+        input_list = output
+        output = []
+        if not input_list:
+            break
+        previous = input_list[-1]
+        for current in input_list:
+            current_inside = _is_inside(current, edge_start, edge_end)
+            previous_inside = _is_inside(previous, edge_start, edge_end)
+            if current_inside:
+                if not previous_inside:
+                    output.append(
+                        _line_intersection(previous, current, edge_start,
+                                           edge_end))
+                output.append(current)
+            elif previous_inside:
+                output.append(
+                    _line_intersection(previous, current, edge_start, edge_end))
+            previous = current
+    return output
+
+
+def _box_iou_rotated_cpu(boxes1: Tensor, boxes2: Tensor) -> Tensor:
+    ious = boxes1.new_zeros((boxes1.shape[0], boxes2.shape[0]))
+    corners1 = [_rotated_box_to_corners(box) for box in boxes1]
+    corners2 = [_rotated_box_to_corners(box) for box in boxes2]
+    areas1 = boxes1[:, 2] * boxes1[:, 3]
+    areas2 = boxes2[:, 2] * boxes2[:, 3]
+
+    for row, poly1 in enumerate(corners1):
+        for col, poly2 in enumerate(corners2):
+            intersection = _intersect_polygons(poly1, poly2)
+            if not intersection:
+                continue
+            inter_area = _polygon_area(intersection)
+            union = areas1[row] + areas2[col] - inter_area
+            if union > 0:
+                ious[row, col] = inter_area / union
+    return ious
+
+
+def _points_in_single_box(points: Tensor, corners: Tensor) -> Tensor:
+    """Check whether points lie inside a single oriented box from corners."""
+    origin = corners[0]
+    axis1 = corners[1] - origin
+    axis2 = corners[3] - origin
+    axis3 = corners[4] - origin
+    rel_points = points - origin
+
+    proj1 = rel_points @ axis1
+    proj2 = rel_points @ axis2
+    proj3 = rel_points @ axis3
+
+    axis1_norm = axis1 @ axis1
+    axis2_norm = axis2 @ axis2
+    axis3_norm = axis3 @ axis3
+
+    return ((proj1 >= 0) & (proj1 <= axis1_norm) & (proj2 >= 0)
+            & (proj2 <= axis2_norm) & (proj3 >= 0) & (proj3 <= axis3_norm))
 
 
 class BaseInstance3DBoxes:
@@ -567,7 +684,10 @@ class BaseInstance3DBoxes:
         boxes2_bev[:, 2:4] = boxes2_bev[:, 2:4].clamp(min=1e-4)
 
         # bev overlap
-        iou2d = box_iou_rotated(boxes1_bev, boxes2_bev)
+        if MMCV_OPS_AVAILABLE:
+            iou2d = box_iou_rotated(boxes1_bev, boxes2_bev)
+        else:
+            iou2d = _box_iou_rotated_cpu(boxes1_bev, boxes2_bev)
         areas1 = (boxes1_bev[:, 2] * boxes1_bev[:, 3]).unsqueeze(1).expand(
             rows, cols)
         areas2 = (boxes2_bev[:, 2] * boxes2_bev[:, 3]).unsqueeze(0).expand(
@@ -643,10 +763,21 @@ class BaseInstance3DBoxes:
         else:
             assert points_clone.dim() == 3 and points_clone.shape[0] == 1
 
-        boxes = boxes.to(points_clone.device).unsqueeze(0)
-        box_idx = points_in_boxes_part(points_clone, boxes)
+        boxes = boxes.to(points_clone.device)
+        if MMCV_OPS_AVAILABLE:
+            box_idx = points_in_boxes_part(points_clone, boxes.unsqueeze(0))
+            return box_idx.squeeze(0)
 
-        return box_idx.squeeze(0)
+        point_cloud = points_clone.squeeze(0)
+        box_corners = type(self)(
+            boxes, box_dim=self.box_dim, with_yaw=self.with_yaw).corners
+        box_idx = point_cloud.new_full((point_cloud.shape[0], ),
+                                       -1,
+                                       dtype=torch.long)
+        for idx, corners in enumerate(box_corners):
+            inside = _points_in_single_box(point_cloud, corners)
+            box_idx[(box_idx < 0) & inside] = idx
+        return box_idx
 
     def points_in_boxes_all(self,
                             points: Tensor,
@@ -676,10 +807,22 @@ class BaseInstance3DBoxes:
         else:
             assert points_clone.dim() == 3 and points_clone.shape[0] == 1
 
-        boxes = boxes.to(points_clone.device).unsqueeze(0)
-        box_idxs_of_pts = points_in_boxes_all(points_clone, boxes)
+        boxes = boxes.to(points_clone.device)
+        if MMCV_OPS_AVAILABLE:
+            box_idxs_of_pts = points_in_boxes_all(points_clone,
+                                                  boxes.unsqueeze(0))
+            return box_idxs_of_pts.squeeze(0)
 
-        return box_idxs_of_pts.squeeze(0)
+        point_cloud = points_clone.squeeze(0)
+        box_corners = type(self)(
+            boxes, box_dim=self.box_dim, with_yaw=self.with_yaw).corners
+        box_idxs_of_pts = point_cloud.new_zeros((point_cloud.shape[0],
+                                                 box_corners.shape[0]),
+                                                dtype=torch.int32)
+        for idx, corners in enumerate(box_corners):
+            box_idxs_of_pts[:, idx] = _points_in_single_box(
+                point_cloud, corners).to(box_idxs_of_pts.dtype)
+        return box_idxs_of_pts
 
     def points_in_boxes(self,
                         points: Tensor,
