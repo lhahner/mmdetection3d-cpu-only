@@ -81,7 +81,8 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
         self.conv_cfg = conv_cfg
         self.norm_cfg = norm_cfg
         self.act_cfg = act_cfg
-        self.loss_decode = MODELS.build(loss_decode)
+        self.loss_decode = MODELS.build(loss_decode) \
+            if loss_decode is not None else None
         self.ignore_index = ignore_index
 
         self.conv_seg = self.build_conv_seg(
@@ -173,6 +174,8 @@ class Base3DDecodeHead(BaseModule, metaclass=ABCMeta):
         """
         seg_label = self._stack_batch_gt(batch_data_samples)
         loss = dict()
+        if self.loss_decode is None:
+            raise RuntimeError('loss_decode is not configured for this head.')
         loss['loss_sem_seg'] = self.loss_decode(
             seg_logit, seg_label, ignore_index=self.ignore_index)
         return loss

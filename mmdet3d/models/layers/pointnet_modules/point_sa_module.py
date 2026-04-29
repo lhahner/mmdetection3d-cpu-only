@@ -3,16 +3,27 @@ from typing import List, Optional, Tuple, Union
 
 import torch
 from mmcv.cnn import ConvModule
-from mmcv.ops import GroupAll
-from mmcv.ops import PointsSampler as Points_Sampler
-from mmcv.ops import QueryAndGroup, gather_points
 from torch import Tensor
 from torch import nn as nn
 from torch.nn import functional as F
 
-from mmdet3d.models.layers import PAConv
 from mmdet3d.utils import ConfigType
 from .builder import SA_MODULES
+
+try:
+    from mmcv.ops import GroupAll
+    from mmcv.ops import PointsSampler as Points_Sampler
+    from mmcv.ops import QueryAndGroup, gather_points
+except Exception:
+    from .cpu_ops import GroupAll
+    from .cpu_ops import PointsSampler as Points_Sampler
+    from .cpu_ops import QueryAndGroup, gather_points
+
+try:
+    from mmdet3d.models.layers import PAConv
+except Exception:
+    class PAConv(nn.Module):
+        pass
 
 
 class BasePointSAModule(nn.Module):

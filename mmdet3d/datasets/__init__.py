@@ -1,41 +1,27 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from .dataset_wrappers import CBGSDataset
-from .det3d_dataset import Det3DDataset
-from .kitti_dataset import KittiDataset
-from .lyft_dataset import LyftDataset
-from .nuscenes_dataset import NuScenesDataset
-# yapf: enable
-from .s3dis_dataset import S3DISDataset, S3DISSegDataset
-from .scannet_dataset import (ScanNetDataset, ScanNetInstanceSegDataset,
-                              ScanNetSegDataset)
-from .seg3d_dataset import Seg3DDataset
-from .semantickitti_dataset import SemanticKittiDataset
-from .sunrgbd_dataset import SUNRGBDDataset
-# yapf: disable
-from .transforms import (AffineResize, BackgroundPointsFilter, GlobalAlignment,
-                         GlobalRotScaleTrans, IndoorPatchPointSample,
-                         IndoorPointSample, LoadAnnotations3D,
-                         LoadPointsFromDict, LoadPointsFromFile,
-                         LoadPointsFromMultiSweeps, NormalizePointsColor,
-                         ObjectNameFilter, ObjectNoise, ObjectRangeFilter,
-                         ObjectSample, PointSample, PointShuffle,
-                         PointsRangeFilter, RandomDropPointsColor,
-                         RandomFlip3D, RandomJitterPoints, RandomResize3D,
-                         RandomShiftScale, Resize3D, VoxelBasedPointSampler)
-from .utils import get_loading_pipeline
-from .waymo_dataset import WaymoDataset
+from ..models._import_utils import optional_import
 
-__all__ = [
-    'KittiDataset', 'CBGSDataset', 'NuScenesDataset', 'LyftDataset',
-    'ObjectSample', 'RandomFlip3D', 'ObjectNoise', 'GlobalRotScaleTrans',
-    'PointShuffle', 'ObjectRangeFilter', 'PointsRangeFilter',
-    'LoadPointsFromFile', 'S3DISSegDataset', 'S3DISDataset',
-    'NormalizePointsColor', 'IndoorPatchPointSample', 'IndoorPointSample',
-    'PointSample', 'LoadAnnotations3D', 'GlobalAlignment', 'SUNRGBDDataset',
-    'ScanNetDataset', 'ScanNetSegDataset', 'ScanNetInstanceSegDataset',
-    'SemanticKittiDataset', 'Det3DDataset', 'Seg3DDataset',
-    'LoadPointsFromMultiSweeps', 'WaymoDataset', 'BackgroundPointsFilter',
-    'VoxelBasedPointSampler', 'get_loading_pipeline', 'RandomDropPointsColor',
-    'RandomJitterPoints', 'ObjectNameFilter', 'AffineResize',
-    'RandomShiftScale', 'LoadPointsFromDict', 'Resize3D', 'RandomResize3D',
-]
+__all__ = []
+
+optional_import('.dataset_wrappers', ['CBGSDataset'], globals(), __all__)
+optional_import('.det3d_dataset', ['Det3DDataset'], globals(), __all__)
+optional_import('.kitti_dataset', ['KittiDataset'], globals(), __all__)
+optional_import('.lyft_dataset', ['LyftDataset'], globals(), __all__)
+optional_import('.nuscenes_dataset', ['NuScenesDataset'], globals(), __all__)
+optional_import('.s3dis_dataset', ['S3DISDataset', 'S3DISSegDataset'],
+                globals(), __all__)
+optional_import('.scannet_dataset',
+                ['ScanNetDataset', 'ScanNetInstanceSegDataset',
+                 'ScanNetSegDataset'], globals(), __all__)
+optional_import('.seg3d_dataset', ['Seg3DDataset'], globals(), __all__)
+optional_import('.semantickitti_dataset', ['SemanticKittiDataset'], globals(),
+                __all__)
+optional_import('.sunrgbd_dataset', ['SUNRGBDDataset'], globals(), __all__)
+optional_import('.transforms',
+                ['LoadAnnotations3D', 'LoadPointsFromDict',
+                 'LoadPointsFromFile', 'LoadPointsFromMultiSweeps',
+                 'NormalizePointsColor', 'Pack3DDetInputs',
+                 'PointSegClassMapping'],
+                globals(), __all__)
+optional_import('.utils', ['get_loading_pipeline'], globals(), __all__)
+optional_import('.waymo_dataset', ['WaymoDataset'], globals(), __all__)

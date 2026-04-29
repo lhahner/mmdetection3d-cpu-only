@@ -27,7 +27,7 @@ model = dict(
         norm_cfg=dict(type='BN1d'),
         act_cfg=dict(type='ReLU'),
         loss_decode=dict(
-            type='mmdet.CrossEntropyLoss',
+            type='CrossEntropyLoss',
             use_sigmoid=False,
             class_weight=None,  # should be modified with dataset
             loss_weight=1.0)),

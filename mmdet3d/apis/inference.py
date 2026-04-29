@@ -108,6 +108,12 @@ def init_model(config: Union[str, Path, Config],
     else:
         warnings.warn('Don\'t suggest using CPU device. '
                       'Some functions are not supported for now.')
+        if hasattr(model, 'backbone') and hasattr(model.backbone, 'num_points'):
+            cpu_caps = (128, 64, 32, 16)
+            model.backbone.num_points = [
+                min(num_point, cpu_caps[idx])
+                for idx, num_point in enumerate(model.backbone.num_points)
+            ]
 
     model.to(device)
     model.eval()
@@ -148,8 +154,10 @@ def inference_detector(model: nn.Module,
     # build the data pipeline
     test_pipeline = deepcopy(cfg.test_dataloader.dataset.pipeline)
     test_pipeline = Compose(test_pipeline)
-    box_type_3d, box_mode_3d = \
-        get_box_type(cfg.test_dataloader.dataset.box_type_3d)
+    dataset_cfg = cfg.test_dataloader.dataset
+    has_box_type = hasattr(dataset_cfg, 'box_type_3d')
+    if has_box_type:
+        box_type_3d, box_mode_3d = get_box_type(dataset_cfg.box_type_3d)
 
     data = []
     for pcd in pcds:
@@ -160,19 +168,38 @@ def inference_detector(model: nn.Module,
                 lidar_points=dict(lidar_path=pcd),
                 timestamp=1,
                 # for ScanNet demo we need axis_align_matrix
-                axis_align_matrix=np.eye(4),
-                box_type_3d=box_type_3d,
-                box_mode_3d=box_mode_3d)
+                axis_align_matrix=np.eye(4))
         else:
             # directly use loaded point cloud
             data_ = dict(
                 points=pcd,
                 timestamp=1,
                 # for ScanNet demo we need axis_align_matrix
-                axis_align_matrix=np.eye(4),
-                box_type_3d=box_type_3d,
-                box_mode_3d=box_mode_3d)
+                axis_align_matrix=np.eye(4))
+        if has_box_type:
+            data_['box_type_3d'] = box_type_3d
+            data_['box_mode_3d'] = box_mode_3d
         data_ = test_pipeline(data_)
+        if (not has_box_type and 'inputs' in data_ and
+                'points' in data_['inputs'] and
+                isinstance(data_['inputs']['points'], torch.Tensor)):
+            max_points = getattr(cfg.test_cfg, 'num_points', None)
+            backbone_num_points = getattr(getattr(model, 'backbone', None),
+                                          'num_points', None)
+            expected_dims = getattr(getattr(model, 'backbone', None),
+                                    'in_channels', None)
+            if backbone_num_points:
+                first_stage_points = backbone_num_points[0]
+                if max_points is None:
+                    max_points = first_stage_points
+                else:
+                    max_points = min(max_points, first_stage_points)
+            points = data_['inputs']['points']
+            if expected_dims is not None and points.shape[1] > expected_dims:
+                data_['inputs']['points'] = points[:, :expected_dims]
+                points = data_['inputs']['points']
+            if max_points is not None and points.shape[0] > max_points:
+                data_['inputs']['points'] = points[:max_points]
         data.append(data_)
 
     collate_data = pseudo_collate(data)

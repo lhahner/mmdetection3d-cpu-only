@@ -1,9 +1,16 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from mmdet.models.losses import FocalLoss, SmoothL1Loss, binary_cross_entropy
-
 from .._import_utils import optional_import
 
-__all__ = ['FocalLoss', 'SmoothL1Loss', 'binary_cross_entropy']
+__all__ = []
+
+try:
+    from mmdet.models.losses import FocalLoss, SmoothL1Loss, binary_cross_entropy
+    __all__ += ['FocalLoss', 'SmoothL1Loss', 'binary_cross_entropy']
+except Exception:
+    pass
+
+optional_import('.cross_entropy_loss', ['CrossEntropyLoss'], globals(),
+                __all__)
 
 optional_import('.axis_aligned_iou_loss',
                 ['AxisAlignedIoULoss', 'axis_aligned_iou_loss'], globals(),

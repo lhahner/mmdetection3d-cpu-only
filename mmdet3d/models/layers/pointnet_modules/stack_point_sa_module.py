@@ -4,11 +4,16 @@ from typing import List, Optional, Tuple
 import torch
 import torch.nn as nn
 from mmcv.cnn import ConvModule
-from mmcv.ops import ball_query, grouping_operation
 from mmengine.model import BaseModule
 from torch import Tensor
 
 from mmdet3d.registry import MODELS
+
+try:
+    from mmcv.ops import ball_query, grouping_operation
+except Exception:
+    from .cpu_ops import ball_query
+    from .cpu_ops import grouping_operation_stacked as grouping_operation
 
 
 class StackQueryAndGroup(BaseModule):

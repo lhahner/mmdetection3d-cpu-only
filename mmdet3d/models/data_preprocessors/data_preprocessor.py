@@ -5,6 +5,7 @@ from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
+from mmengine.model import BaseDataPreprocessor
 from mmengine.model import stack_batch
 from mmengine.utils import is_seq_of
 from torch import Tensor
@@ -14,7 +15,6 @@ from mmdet3d.registry import MODELS
 from mmdet3d.structures.det3d_data_sample import SampleList
 from mmdet3d.utils import OptConfigType
 from .utils import multiview_img_stack_batch
-from .voxelize import VoxelizationByGridShape, dynamic_scatter_3d
 
 try:
     from mmdet.models.data_preprocessors.data_preprocessor import \
@@ -23,7 +23,52 @@ except Exception:
     try:
         from mmdet.models.data_preprocessors import DetDataPreprocessor
     except Exception:
-        from mmdet.models import DetDataPreprocessor
+
+        class DetDataPreprocessor(BaseDataPreprocessor):
+
+            def __init__(self,
+                         mean: Sequence[Number] = None,
+                         std: Sequence[Number] = None,
+                         pad_size_divisor: int = 1,
+                         pad_value: Union[float, int] = 0,
+                         pad_mask: bool = False,
+                         mask_pad_value: int = 0,
+                         pad_seg: bool = False,
+                         seg_pad_value: int = 255,
+                         bgr_to_rgb: bool = False,
+                         rgb_to_bgr: bool = False,
+                         boxtype2tensor: bool = True,
+                         non_blocking: bool = False,
+                         batch_augments: Optional[List[dict]] = None) -> None:
+                super().__init__(non_blocking=non_blocking)
+                assert not (bgr_to_rgb and rgb_to_bgr)
+                assert (mean is None) == (std is None), \
+                    'mean and std should be both None or both set.'
+                self.pad_size_divisor = pad_size_divisor
+                self.pad_value = pad_value
+                self.pad_mask = pad_mask
+                self.mask_pad_value = mask_pad_value
+                self.pad_seg = pad_seg
+                self.seg_pad_value = seg_pad_value
+                self.boxtype2tensor = boxtype2tensor
+                self.batch_augments = batch_augments
+                self._channel_conversion = bgr_to_rgb or rgb_to_bgr
+                self._enable_normalize = mean is not None
+                if self._enable_normalize:
+                    self.register_buffer(
+                        'mean',
+                        torch.tensor(mean, dtype=torch.float32).view(-1, 1, 1),
+                        persistent=False)
+                    self.register_buffer(
+                        'std',
+                        torch.tensor(std, dtype=torch.float32).view(-1, 1, 1),
+                        persistent=False)
+
+            def pad_gt_masks(self, data_samples) -> None:
+                return None
+
+            def pad_gt_sem_seg(self, data_samples) -> None:
+                return None
 
 try:
     from mmdet.models.utils.misc import samplelist_boxtype2tensor
@@ -135,6 +180,7 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
         self.batch_first = batch_first
         self.max_voxels = max_voxels
         if voxel:
+            from .voxelize import VoxelizationByGridShape
             self.voxel_layer = VoxelizationByGridShape(**voxel_layer)
 
     def forward(self,
@@ -372,6 +418,8 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
             - num_points (Tensor, optional): Number of points in each voxel.
             - voxel_centers (Tensor, optional): Centers of voxels.
         """
+
+        from .voxelize import dynamic_scatter_3d
 
         voxel_dict = dict()
 

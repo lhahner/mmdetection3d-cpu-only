@@ -3,12 +3,16 @@ from typing import List
 
 import torch
 from mmcv.cnn import ConvModule
-from mmcv.ops import three_interpolate, three_nn
 from mmengine.model import BaseModule
 from torch import Tensor
 from torch import nn as nn
 
 from mmdet3d.utils import ConfigType, OptMultiConfig
+
+try:
+    from mmcv.ops import three_interpolate, three_nn
+except Exception:
+    from .cpu_ops import three_interpolate, three_nn
 
 
 class PointFPModule(BaseModule):

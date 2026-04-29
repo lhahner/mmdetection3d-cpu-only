@@ -1,9 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from mmdet.models.backbones import SSDVGG, HRNet, ResNet, ResNetV1d, ResNeXt
-
 from .._import_utils import optional_import
 
-__all__ = ['ResNet', 'ResNetV1d', 'ResNeXt', 'SSDVGG', 'HRNet']
+__all__ = []
+
+try:
+    from mmdet.models.backbones import SSDVGG, HRNet, ResNet, ResNetV1d, ResNeXt
+    __all__ += ['ResNet', 'ResNetV1d', 'ResNeXt', 'SSDVGG', 'HRNet']
+except Exception:
+    pass
 
 optional_import('.cylinder3d', ['Asymm3DSpconv'], globals(), __all__)
 optional_import('.dgcnn', ['DGCNNBackbone'], globals(), __all__)

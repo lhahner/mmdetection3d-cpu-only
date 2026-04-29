@@ -77,6 +77,7 @@ class PointNet2SAMSG(BasePointNet):
                      normalize_xyz=False),
                  init_cfg: OptConfigType = None):
         super().__init__(init_cfg=init_cfg)
+        self.in_channels = in_channels
         self.num_sa = len(sa_channels)
         self.out_indices = out_indices
         assert max(out_indices) < self.num_sa

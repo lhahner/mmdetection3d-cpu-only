@@ -7,12 +7,22 @@ import mmengine
 import numpy as np
 from mmcv.transforms import LoadImageFromFile
 from mmcv.transforms.base import BaseTransform
-from mmdet.datasets.transforms import LoadAnnotations
 from mmengine.fileio import get
 
 from mmdet3d.registry import TRANSFORMS
 from mmdet3d.structures.bbox_3d import get_box_type
 from mmdet3d.structures.points import BasePoints, get_points_type
+
+try:
+    from mmdet.datasets.transforms import LoadAnnotations
+except Exception as load_annotations_error:
+
+    class LoadAnnotations(BaseTransform):
+
+        def __init__(self, *args, **kwargs) -> None:
+            raise ImportError(
+                'LoadAnnotations requires MMDetection ops support.'
+            ) from load_annotations_error
 
 
 @TRANSFORMS.register_module()
@@ -533,9 +543,9 @@ class NormalizePointsColor(BaseTransform):
                 - points (:obj:`BasePoints`): Points after color normalization.
         """
         points = input_dict['points']
-        assert points.attribute_dims is not None and \
-               'color' in points.attribute_dims.keys(), \
-               'Expect points have color attribute'
+        if points.attribute_dims is None or \
+                'color' not in points.attribute_dims.keys():
+            return input_dict
         if self.color_mean is not None:
             points.color = points.color - \
                            points.color.new_tensor(self.color_mean)
@@ -644,15 +654,24 @@ class LoadPointsFromFile(BaseTransform):
         """
         pts_file_path = results['lidar_points']['lidar_path']
         points = self._load_points(pts_file_path)
-        points = points.reshape(-1, self.load_dim)
-        points = points[:, self.use_dim]
+        load_dim = self.load_dim
+        if points.size % load_dim != 0:
+            for candidate in (6, 5, 4, 3):
+                if points.size % candidate == 0:
+                    load_dim = candidate
+                    break
+        points = points.reshape(-1, load_dim)
+        use_dim = [dim for dim in self.use_dim if dim < load_dim]
+        if not use_dim:
+            use_dim = list(range(min(3, load_dim)))
+        points = points[:, use_dim]
         if self.norm_intensity:
-            assert len(self.use_dim) >= 4, \
-                f'When using intensity norm, expect used dimensions >= 4, got {len(self.use_dim)}'  # noqa: E501
+            assert len(use_dim) >= 4, \
+                f'When using intensity norm, expect used dimensions >= 4, got {len(use_dim)}'  # noqa: E501
             points[:, 3] = np.tanh(points[:, 3])
         if self.norm_elongation:
-            assert len(self.use_dim) >= 5, \
-                f'When using elongation norm, expect used dimensions >= 5, got {len(self.use_dim)}'  # noqa: E501
+            assert len(use_dim) >= 5, \
+                f'When using elongation norm, expect used dimensions >= 5, got {len(use_dim)}'  # noqa: E501
             points[:, 4] = np.tanh(points[:, 4])
         attribute_dims = None
 
@@ -664,8 +683,7 @@ class LoadPointsFromFile(BaseTransform):
                  np.expand_dims(height, 1), points[:, 3:]], 1)
             attribute_dims = dict(height=3)
 
-        if self.use_color:
-            assert len(self.use_dim) >= 6
+        if self.use_color and len(use_dim) >= 6:
             if attribute_dims is None:
                 attribute_dims = dict()
             attribute_dims.update(
@@ -713,9 +731,14 @@ class LoadPointsFromDict(LoadPointsFromFile):
         assert 'points' in results
         points = results['points']
 
+        use_dim = [dim for dim in self.use_dim if dim < points.shape[1]]
+        if not use_dim:
+            use_dim = list(range(min(3, points.shape[1])))
+        points = points[:, use_dim]
+
         if self.norm_intensity:
-            assert len(self.use_dim) >= 4, \
-                f'When using intensity norm, expect used dimensions >= 4, got {len(self.use_dim)}'  # noqa: E501
+            assert len(use_dim) >= 4, \
+                f'When using intensity norm, expect used dimensions >= 4, got {len(use_dim)}'  # noqa: E501
             points[:, 3] = np.tanh(points[:, 3])
         attribute_dims = None
 
@@ -727,8 +750,7 @@ class LoadPointsFromDict(LoadPointsFromFile):
                  np.expand_dims(height, 1), points[:, 3:]], 1)
             attribute_dims = dict(height=3)
 
-        if self.use_color:
-            assert len(self.use_dim) >= 6
+        if self.use_color and len(use_dim) >= 6:
             if attribute_dims is None:
                 attribute_dims = dict()
             attribute_dims.update(
